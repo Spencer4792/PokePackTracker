@@ -370,20 +370,25 @@ img {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-md);
   color: var(--color-text);
   font-size: 0.875rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  cursor: pointer;
 }
 
 .sort-direction {
   background: var(--color-bg-card);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
   color: var(--color-text);
-  font-size: 1rem;
-  width: 36px;
-  height: 36px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-width: 50px;
   transition: all var(--transition-fast);
 }
 
@@ -530,10 +535,15 @@ img {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  padding: var(--space-sm) var(--space-md);
+  padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-md);
   color: var(--color-text);
   font-size: 0.875rem;
   transition: border-color var(--transition-fast);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239ca3af' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10l-5 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
 }
 
 .filter-group select:focus {

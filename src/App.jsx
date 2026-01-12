@@ -1375,10 +1375,10 @@ export default function App() {
 
       <footer className="app-footer">
         <p>
-          Price data is simulated for demo purposes. 
-          Connect to <a href="https://pokemontcg.io" target="_blank" rel="noopener noreferrer">Pokémon TCG API</a> for live data.
+          Price data sourced from TCGPlayer via TCGCSV. 
+          <a href="https://tcgcsv.com" target="_blank" rel="noopener noreferrer">Learn more</a>
         </p>
-        <p className="footer-version">v1.0.0 • Built with React</p>
+        <p className="footer-version">v1.0.0 - PokePack Tracker</p>
       </footer>
     </div>
   );
