@@ -989,6 +989,47 @@ img {
   border-color: var(--color-secondary);
 }
 
+/* Buy button styling */
+.quick-link.buy-link {
+  background: var(--gradient-primary);
+  color: white;
+  border: none;
+  font-weight: 600;
+}
+
+.quick-link.buy-link:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.quick-link.buy-link.direct-link {
+  background: linear-gradient(135deg, #00A0E9 0%, #0080c0 100%);
+}
+
+.secondary-links {
+  margin-top: var(--space-xs);
+}
+
+/* Price diff styling */
+.price-diff {
+  margin-top: var(--space-xs);
+  padding-top: var(--space-xs);
+  border-top: 1px solid var(--color-border);
+}
+
+.price-diff-value {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+.price-diff-value.good {
+  color: var(--color-great-deal);
+}
+
+.price-diff-value.bad {
+  color: var(--color-overpriced);
+}
+
 .quick-link.direct-link {
   background: rgba(16, 185, 129, 0.15);
   border-color: var(--color-great-deal);
@@ -1491,4 +1532,460 @@ img {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-light);
+}
+
+/* ============================================================================
+   MODAL STYLES
+   ============================================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+}
+
+.modal {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: var(--space-xs);
+  line-height: 1;
+}
+
+.modal-close:hover {
+  color: var(--color-text);
+}
+
+.modal-body {
+  padding: var(--space-lg);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border);
+}
+
+/* ============================================================================
+   DISCORD SETTINGS
+   ============================================================================ */
+.discord-setup-guide {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.discord-setup-guide h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
+  color: var(--color-secondary);
+}
+
+.discord-setup-guide ol {
+  margin: 0;
+  padding-left: var(--space-lg);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  line-height: 1.8;
+}
+
+.form-group {
+  margin-bottom: var(--space-md);
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: var(--space-xs);
+  color: var(--color-text-muted);
+}
+
+.discord-url-input {
+  width: 100%;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-family: var(--font-mono);
+}
+
+.discord-url-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.test-result {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  margin-top: var(--space-md);
+}
+
+.test-result.success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--color-great-deal);
+  color: var(--color-great-deal);
+}
+
+.test-result.error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid var(--color-overpriced);
+  color: var(--color-overpriced);
+}
+
+/* ============================================================================
+   PRICE ALERT MODAL
+   ============================================================================ */
+.alert-pack-info {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.alert-pack-image {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  background: var(--color-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs);
+}
+
+.alert-pack-info h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.alert-pack-info p {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.current-price-info {
+  font-family: var(--font-mono);
+  color: var(--color-text-dim);
+  font-size: 0.8rem;
+  margin-top: var(--space-xs);
+}
+
+.price-input-group {
+  display: flex;
+  align-items: center;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.currency-symbol {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.price-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text);
+  font-size: 1.25rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+}
+
+.price-input:focus {
+  outline: none;
+}
+
+.price-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.preset-btn {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.preset-btn:hover {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-primary);
+}
+
+.preset-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-primary);
+}
+
+/* ============================================================================
+   ALERTS VIEW & MANAGER
+   ============================================================================ */
+.alerts-view {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.alerts-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.alerts-header h2 {
+  font-size: 1.75rem;
+  margin-bottom: var(--space-sm);
+}
+
+.alerts-header p {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-md);
+}
+
+.alerts-empty {
+  text-align: center;
+  padding: var(--space-xxl);
+  color: var(--color-text-muted);
+}
+
+.alerts-empty p {
+  margin-bottom: var(--space-sm);
+}
+
+.webhook-warning {
+  color: var(--color-at-msrp);
+  font-size: 0.85rem;
+  margin-top: var(--space-md);
+}
+
+.webhook-warning-banner {
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid var(--color-at-msrp);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-at-msrp);
+  font-size: 0.85rem;
+  margin-bottom: var(--space-md);
+  text-align: center;
+}
+
+.alerts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.alert-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+}
+
+.alert-item.triggered {
+  opacity: 0.6;
+}
+
+.alert-info h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-xs);
+}
+
+.alert-info p {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.alert-target {
+  font-family: var(--font-mono);
+  color: var(--color-great-deal);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.triggered-badge {
+  background: var(--color-text-dim);
+  color: var(--color-bg);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.alert-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.btn-icon {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-icon:hover {
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+}
+
+.btn-icon.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--color-overpriced);
+  color: var(--color-overpriced);
+}
+
+/* ============================================================================
+   BUTTONS
+   ============================================================================ */
+.btn {
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  border: none;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background: var(--color-bg-elevated);
+  border-color: var(--color-primary);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   ALERT BADGE & BUTTON ON PACK CARDS
+   ============================================================================ */
+.alert-badge {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  text-transform: uppercase;
+}
+
+.alert-btn {
+  color: var(--color-text-muted);
+}
+
+.alert-btn:hover {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.alert-btn.has-alert {
+  background: rgba(59, 76, 202, 0.1);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* Settings button in nav */
+.settings-btn {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
 }

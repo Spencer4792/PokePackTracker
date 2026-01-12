@@ -26,7 +26,7 @@ const MSRP_DATA = {
   'special-collection': { name: 'Special Collection', msrp: 39.99 },
 };
 
-// Retailer configuration with search URL generators
+// Retailer configuration - TCGPlayer only
 const RETAILERS = {
   tcgplayer: {
     name: 'TCGPlayer',
@@ -34,48 +34,6 @@ const RETAILERS = {
     color: '#00A0E9',
     getSearchUrl: (packName, setName) => 
       `https://www.tcgplayer.com/search/pokemon/product?q=${encodeURIComponent(packName)}&view=grid&ProductTypeName=Sealed+Products`,
-  },
-  ebay: {
-    name: 'eBay',
-    icon: 'eBay',
-    color: '#E53238',
-    getSearchUrl: (packName, setName) => 
-      `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(`pokemon ${packName} sealed`)}&_sacat=183454`,
-  },
-  amazon: {
-    name: 'Amazon',
-    icon: 'AMZ',
-    color: '#FF9900',
-    getSearchUrl: (packName, setName) => 
-      `https://www.amazon.com/s?k=${encodeURIComponent(`pokemon ${packName}`)}&i=toys-and-games`,
-  },
-  pokemoncenter: {
-    name: 'Pokémon Center',
-    icon: 'PC',
-    color: '#FFCB05',
-    getSearchUrl: (packName, setName) => 
-      `https://www.pokemoncenter.com/search/${encodeURIComponent(setName)}`,
-  },
-  walmart: {
-    name: 'Walmart',
-    icon: 'WMT',
-    color: '#0071CE',
-    getSearchUrl: (packName, setName) => 
-      `https://www.walmart.com/search?q=${encodeURIComponent(`pokemon ${packName}`)}`,
-  },
-  target: {
-    name: 'Target',
-    icon: 'TGT',
-    color: '#CC0000',
-    getSearchUrl: (packName, setName) => 
-      `https://www.target.com/s?searchTerm=${encodeURIComponent(`pokemon ${setName}`)}`,
-  },
-  gamestop: {
-    name: 'GameStop',
-    icon: 'GS',
-    color: '#ED1C24',
-    getSearchUrl: (packName, setName) => 
-      `https://www.gamestop.com/search/?q=${encodeURIComponent(`pokemon ${packName}`)}&lang=en_US`,
   },
 };
 
@@ -139,6 +97,96 @@ const Utils = {
     link.download = `${filename}_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(link.href);
+  },
+};
+
+// ============================================================================
+// DISCORD INTEGRATION SERVICE
+// ============================================================================
+
+const DiscordService = {
+  sendAlert: async (webhookUrl, pack, targetPrice) => {
+    if (!webhookUrl) return { success: false, error: 'No webhook URL configured' };
+    
+    const msrp = MSRP_DATA[pack.productType]?.msrp || 0;
+    const savings = msrp - pack.currentPrice;
+    const percentOff = msrp ? ((savings / msrp) * 100).toFixed(1) : 0;
+    const tcgplayerUrl = pack.tcgplayerUrl || RETAILERS.tcgplayer.getSearchUrl(pack.name, pack.setName);
+    
+    let color = 0x10b981; // Green
+    if (pack.currentPrice <= targetPrice * 0.9) color = 0xfbbf24; // Gold for great deals
+    if (pack.currentPrice <= targetPrice * 0.8) color = 0xef4444; // Red for amazing deals
+    
+    const embed = {
+      embeds: [{
+        title: `PRICE DROP: ${pack.name}`,
+        description: `**Price dropped below your target of ${Utils.formatPrice(targetPrice)}!**`,
+        color: color,
+        fields: [
+          { name: 'TCGPlayer Price', value: Utils.formatPrice(pack.currentPrice), inline: true },
+          { name: 'Your Target', value: Utils.formatPrice(targetPrice), inline: true },
+          { name: 'MSRP', value: Utils.formatPrice(msrp), inline: true },
+          { name: 'You Save vs MSRP', value: `${Utils.formatPrice(savings)} (${percentOff}% off)`, inline: false },
+          { name: 'Set', value: pack.setName, inline: true },
+          { name: 'Type', value: MSRP_DATA[pack.productType]?.name || pack.productType, inline: true },
+        ],
+        thumbnail: { url: pack.imageUrl || `https://images.pokemontcg.io/${pack.setId}/logo.png` },
+        timestamp: new Date().toISOString(),
+        footer: { text: 'PokePack Tracker' },
+      }],
+      components: [{
+        type: 1,
+        components: [{
+          type: 2,
+          style: 5,
+          label: 'Buy on TCGPlayer',
+          url: tcgplayerUrl,
+        }]
+      }]
+    };
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(embed),
+      });
+      if (!response.ok) throw new Error(`Discord error: ${response.status}`);
+      return { success: true };
+    } catch (error) {
+      console.error('Discord alert failed:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  testWebhook: async (webhookUrl) => {
+    if (!webhookUrl) return { success: false, error: 'No webhook URL' };
+    
+    const testEmbed = {
+      embeds: [{
+        title: 'PokePack Tracker Connected!',
+        description: 'Your Discord webhook is working. You will receive price alerts here when TCGPlayer prices drop below your targets.',
+        color: 0x10b981,
+        fields: [
+          { name: 'Status', value: 'Connected', inline: true },
+          { name: 'Source', value: 'TCGPlayer', inline: true },
+        ],
+        timestamp: new Date().toISOString(),
+        footer: { text: 'Test message from PokePack Tracker' },
+      }],
+    };
+
+    try {
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testEmbed),
+      });
+      if (!response.ok) throw new Error(`Discord error: ${response.status}`);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
   },
 };
 
@@ -482,6 +530,251 @@ function NotificationToast({ notifications, onRemove }) {
   );
 }
 
+// --- Discord Settings Panel ---
+function DiscordSettings({ webhookUrl, onWebhookChange, onTest, isOpen, onClose }) {
+  const [inputUrl, setInputUrl] = useState(webhookUrl || '');
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    const result = await onTest(inputUrl);
+    setTestResult(result);
+    setTesting(false);
+  };
+
+  const handleSave = () => {
+    onWebhookChange(inputUrl);
+    onClose();
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal discord-settings-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Discord Alert Settings</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="modal-body">
+          <div className="discord-setup-guide">
+            <h3>How to Set Up Discord Alerts:</h3>
+            <ol>
+              <li>Open your Discord server</li>
+              <li>Go to Server Settings → Integrations → Webhooks</li>
+              <li>Click "New Webhook"</li>
+              <li>Name it "PokePack Tracker" and choose a channel</li>
+              <li>Click "Copy Webhook URL"</li>
+              <li>Paste the URL below</li>
+            </ol>
+          </div>
+
+          <div className="form-group">
+            <label>Discord Webhook URL</label>
+            <input
+              type="text"
+              value={inputUrl}
+              onChange={(e) => setInputUrl(e.target.value)}
+              placeholder="https://discord.com/api/webhooks/..."
+              className="discord-url-input"
+            />
+          </div>
+
+          {testResult && (
+            <div className={`test-result ${testResult.success ? 'success' : 'error'}`}>
+              {testResult.success 
+                ? 'Success! Check your Discord channel for the test message.'
+                : `Error: ${testResult.error}`
+              }
+            </div>
+          )}
+
+          <div className="modal-actions">
+            <button 
+              className="btn btn-secondary" 
+              onClick={handleTest}
+              disabled={!inputUrl || testing}
+            >
+              {testing ? 'Testing...' : 'Test Webhook'}
+            </button>
+            <button 
+              className="btn btn-primary"
+              onClick={handleSave}
+              disabled={!inputUrl}
+            >
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Price Alert Modal ---
+function PriceAlertModal({ pack, isOpen, onClose, onSave, existingAlert }) {
+  const [targetPrice, setTargetPrice] = useState(
+    existingAlert?.targetPrice || 
+    (MSRP_DATA[pack?.productType]?.msrp || pack?.currentPrice || 0)
+  );
+  const [notifyOnce, setNotifyOnce] = useState(existingAlert?.notifyOnce ?? true);
+
+  useEffect(() => {
+    if (pack && isOpen) {
+      setTargetPrice(
+        existingAlert?.targetPrice || 
+        MSRP_DATA[pack.productType]?.msrp || 
+        pack.currentPrice
+      );
+    }
+  }, [pack, isOpen, existingAlert]);
+
+  if (!isOpen || !pack) return null;
+
+  const msrp = MSRP_DATA[pack.productType]?.msrp || 0;
+  const currentPrice = pack.currentPrice || 0;
+
+  const handleSave = () => {
+    onSave({
+      packId: pack.id,
+      packName: pack.name,
+      setName: pack.setName,
+      productType: pack.productType,
+      targetPrice: parseFloat(targetPrice),
+      notifyOnce,
+      createdAt: existingAlert?.createdAt || new Date().toISOString(),
+      triggered: false,
+    });
+    onClose();
+  };
+
+  const presets = [
+    { label: 'MSRP', value: msrp },
+    { label: '10% off', value: msrp * 0.9 },
+    { label: '15% off', value: msrp * 0.85 },
+    { label: '20% off', value: msrp * 0.8 },
+  ];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal price-alert-modal" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>Set Price Alert</h2>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        
+        <div className="modal-body">
+          <div className="alert-pack-info">
+            <img 
+              src={pack.imageUrl || `https://images.pokemontcg.io/${pack.setId}/logo.png`}
+              alt={pack.name}
+              className="alert-pack-image"
+            />
+            <div>
+              <h3>{pack.name}</h3>
+              <p>{pack.setName}</p>
+              <p className="current-price-info">
+                Current: {Utils.formatPrice(currentPrice)} | MSRP: {Utils.formatPrice(msrp)}
+              </p>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Alert me when price drops below:</label>
+            <div className="price-input-group">
+              <span className="currency-symbol">$</span>
+              <input
+                type="number"
+                value={targetPrice}
+                onChange={(e) => setTargetPrice(e.target.value)}
+                step="0.01"
+                min="0"
+                className="price-input"
+              />
+            </div>
+          </div>
+
+          <div className="price-presets">
+            {presets.map(preset => (
+              <button
+                key={preset.label}
+                className={`preset-btn ${parseFloat(targetPrice) === preset.value ? 'active' : ''}`}
+                onClick={() => setTargetPrice(preset.value.toFixed(2))}
+              >
+                {preset.label}: {Utils.formatPrice(preset.value)}
+              </button>
+            ))}
+          </div>
+
+          <div className="form-group checkbox-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={notifyOnce}
+                onChange={(e) => setNotifyOnce(e.target.checked)}
+              />
+              Only notify once (disable alert after triggered)
+            </label>
+          </div>
+
+          <div className="modal-actions">
+            <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button className="btn btn-primary" onClick={handleSave}>
+              {existingAlert ? 'Update Alert' : 'Create Alert'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Alerts Manager Panel ---
+function AlertsManager({ alerts, onRemove, onEdit, webhookConfigured }) {
+  if (alerts.length === 0) {
+    return (
+      <div className="alerts-empty">
+        <p>No price alerts set yet.</p>
+        <p>Click the bell icon on any pack to create an alert.</p>
+        {!webhookConfigured && (
+          <p className="webhook-warning">
+            Configure Discord webhook in settings to receive notifications.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="alerts-list">
+      {!webhookConfigured && (
+        <div className="webhook-warning-banner">
+          Discord webhook not configured. Alerts won't send notifications until you set it up in Settings.
+        </div>
+      )}
+      {alerts.map(alert => (
+        <div key={alert.packId} className={`alert-item ${alert.triggered ? 'triggered' : ''}`}>
+          <div className="alert-info">
+            <h4>{alert.packName}</h4>
+            <p>{alert.setName}</p>
+            <p className="alert-target">
+              Target: {Utils.formatPrice(alert.targetPrice)}
+              {alert.triggered && <span className="triggered-badge">TRIGGERED</span>}
+            </p>
+          </div>
+          <div className="alert-actions">
+            <button className="btn-icon" onClick={() => onEdit(alert)} title="Edit">Edit</button>
+            <button className="btn-icon btn-danger" onClick={() => onRemove(alert.packId)} title="Delete">Del</button>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // --- Search Bar ---
 function SearchBar({ onSearch, placeholder = "Search packs..." }) {
   const [query, setQuery] = useState('');
@@ -649,19 +942,9 @@ function PriceBadge({ currentPrice, msrp }) {
 }
 
 // --- Pack Card ---
-function PackCard({ pack, onAddToWatchlist, isWatched }) {
-  const [showRetailers, setShowRetailers] = useState(false);
+function PackCard({ pack, onAddToWatchlist, isWatched, onSetAlert, hasAlert }) {
   const msrpInfo = MSRP_DATA[pack.productType] || MSRP_DATA['booster-pack'];
-  
-  // Find the lowest price retailer
-  const lowestRetailer = pack.retailerPrices 
-    ? Object.entries(pack.retailerPrices).reduce((lowest, [key, price]) => {
-        if (!lowest || price < lowest.price) {
-          return { key, price, ...RETAILERS[key] };
-        }
-        return lowest;
-      }, null)
-    : null;
+  const priceDiff = msrpInfo.msrp ? ((pack.currentPrice - msrpInfo.msrp) / msrpInfo.msrp * 100) : 0;
 
   return (
     <div className="pack-card">
@@ -675,11 +958,7 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
           }}
         />
         {pack.isHolographic && <span className="holo-badge">HOLO</span>}
-        {lowestRetailer && (
-          <span className="lowest-price-badge" style={{ backgroundColor: lowestRetailer.color }}>
-            {lowestRetailer.icon} Best: {Utils.formatPrice(lowestRetailer.price)}
-          </span>
-        )}
+        {hasAlert && <span className="alert-badge">ALERT</span>}
       </div>
 
       <div className="pack-content">
@@ -689,85 +968,37 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
 
         <div className="pack-pricing">
           <div className="price-row">
-            <span className="price-label">Best Price:</span>
+            <span className="price-label">TCGPlayer:</span>
             <span className="price-current">{Utils.formatPrice(pack.currentPrice)}</span>
           </div>
           <div className="price-row">
             <span className="price-label">MSRP:</span>
             <span className="price-msrp">{Utils.formatPrice(msrpInfo.msrp)}</span>
           </div>
+          <div className="price-row price-diff">
+            <span className="price-label">vs MSRP:</span>
+            <span className={`price-diff-value ${priceDiff <= 0 ? 'good' : 'bad'}`}>
+              {priceDiff <= 0 ? '' : '+'}{priceDiff.toFixed(1)}%
+            </span>
+          </div>
         </div>
 
         <PriceBadge currentPrice={pack.currentPrice} msrp={msrpInfo.msrp} />
 
-        {/* Retailer Prices Section */}
-        {pack.retailerPrices && (
-          <div className="retailer-section">
-            <button 
-              className="retailer-toggle"
-              onClick={() => setShowRetailers(!showRetailers)}
-            >
-              {showRetailers ? '- Hide Prices' : '+ Compare Prices'} ({Object.keys(pack.retailerPrices).length} stores)
-            </button>
-            
-            {showRetailers && (
-              <div className="retailer-prices">
-                {Object.entries(pack.retailerPrices)
-                  .sort(([,a], [,b]) => a - b)
-                  .map(([retailerKey, price]) => {
-                    const retailer = RETAILERS[retailerKey];
-                    if (!retailer) return null;
-                    const isLowest = lowestRetailer?.key === retailerKey;
-                    return (
-                      <a
-                        key={retailerKey}
-                        href={retailer.getSearchUrl(pack.name, pack.setName)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`retailer-link ${isLowest ? 'lowest' : ''}`}
-                        style={{ '--retailer-color': retailer.color }}
-                      >
-                        <span className="retailer-icon">{retailer.icon}</span>
-                        <span className="retailer-name">{retailer.name}</span>
-                        <span className="retailer-price">{Utils.formatPrice(price)}</span>
-                        {isLowest && <span className="lowest-tag">LOWEST</span>}
-                      </a>
-                    );
-                  })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Quick Shop Links */}
+        {/* Action Buttons */}
         <div className="quick-links">
           <a 
             href={pack.tcgplayerUrl || RETAILERS.tcgplayer.getSearchUrl(pack.name, pack.setName)}
             target="_blank"
             rel="noopener noreferrer"
-            className={`quick-link ${pack.isRealData ? 'direct-link' : ''}`}
+            className={`quick-link buy-link ${pack.isRealData ? 'direct-link' : ''}`}
             title={pack.isRealData ? "Buy on TCGPlayer (Direct Link)" : "Search on TCGPlayer"}
           >
-            TCG
+            Buy on TCGPlayer
           </a>
-          <a 
-            href={RETAILERS.ebay.getSearchUrl(pack.name, pack.setName)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="quick-link"
-            title="Search on eBay"
-          >
-            eBay
-          </a>
-          <a 
-            href={RETAILERS.amazon.getSearchUrl(pack.name, pack.setName)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="quick-link"
-            title="Search on Amazon"
-          >
-            AMZ
-          </a>
+        </div>
+        
+        <div className="quick-links secondary-links">
           <button 
             onClick={() => onAddToWatchlist(pack)}
             className={`quick-link watchlist-btn ${isWatched ? 'watched' : ''}`}
@@ -775,14 +1006,21 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
           >
             {isWatched ? 'Saved' : 'Save'}
           </button>
+          <button 
+            onClick={() => onSetAlert(pack)}
+            className={`quick-link alert-btn ${hasAlert ? 'has-alert' : ''}`}
+            title={hasAlert ? 'Edit Price Alert' : 'Set Price Alert'}
+          >
+            {hasAlert ? 'Alert On' : 'Alert'}
+          </button>
         </div>
         
         {/* Real data indicator */}
         {pack.isRealData && (
           <div className="real-data-indicator">
-            <span>LIVE PRICE</span>
+            <span>LIVE TCGPlayer Price</span>
             {pack.lastUpdated && (
-              <span className="updated-time">Updated: {new Date(pack.lastUpdated).toLocaleTimeString()}</span>
+              <span className="updated-time">{new Date(pack.lastUpdated).toLocaleTimeString()}</span>
             )}
           </div>
         )}
@@ -978,7 +1216,7 @@ async function fetchRealPackData(sets) {
   // Process sets with groupIds (for real data)
   const setsWithGroups = sets.filter(s => s.groupId);
   
-  for (const set of setsWithGroups.slice(0, 8)) { // Limit for performance
+  for (const set of setsWithGroups.slice(0, 10)) { // Limit for performance
     try {
       const sealedProducts = await api.getSealedProductsWithPrices(set.groupId, set.name);
       
@@ -986,23 +1224,10 @@ async function fetchRealPackData(sets) {
         const productType = api.getProductType(product.name);
         const msrp = MSRP_DATA[productType]?.msrp || 4.49;
         
-        // TCGPlayer is the source price
+        // TCGPlayer price (use low price as the current market price)
         const tcgplayerPrice = product.lowPrice || product.marketPrice || product.midPrice;
         
         if (!tcgplayerPrice) continue;
-        
-        // Generate estimated prices for other retailers (based on TCGPlayer)
-        const retailerPrices = {
-          tcgplayer: tcgplayerPrice,
-          ebay: +(tcgplayerPrice * (0.95 + Math.random() * 0.15)).toFixed(2),
-          amazon: +(tcgplayerPrice * (1.0 + Math.random() * 0.2)).toFixed(2),
-          walmart: +(msrp * (0.95 + Math.random() * 0.1)).toFixed(2),
-          target: +(msrp * (0.98 + Math.random() * 0.05)).toFixed(2),
-          gamestop: +(msrp * (1.0 + Math.random() * 0.1)).toFixed(2),
-          pokemoncenter: msrp,
-        };
-        
-        const lowestPrice = Math.min(...Object.values(retailerPrices));
         
         packs.push({
           id: `${set.id}-${product.productId}`,
@@ -1012,9 +1237,10 @@ async function fetchRealPackData(sets) {
           setName: set.name,
           series: set.series,
           productType,
-          currentPrice: lowestPrice,
-          tcgplayerPrice,
-          retailerPrices,
+          currentPrice: tcgplayerPrice,
+          marketPrice: product.marketPrice,
+          lowPrice: product.lowPrice,
+          midPrice: product.midPrice,
           releaseDate: set.releaseDate,
           isHolographic: product.name.toLowerCase().includes('holo'),
           imageUrl: product.imageUrl || set.images?.logo,
@@ -1033,7 +1259,6 @@ async function fetchRealPackData(sets) {
 
 function generateMockPacks(sets) {
   const productTypes = Object.keys(MSRP_DATA);
-  const retailerKeys = Object.keys(RETAILERS);
   const packs = [];
 
   sets.slice(0, 15).forEach(set => {
@@ -1041,22 +1266,9 @@ function generateMockPacks(sets) {
     
     selectedTypes.forEach(type => {
       const msrp = MSRP_DATA[type].msrp;
-      
-      const retailerPrices = {};
-      retailerKeys.forEach(retailer => {
-        let variance;
-        switch(retailer) {
-          case 'pokemoncenter': variance = 1.0; break;
-          case 'walmart':
-          case 'target': variance = 0.95 + Math.random() * 0.1; break;
-          case 'tcgplayer':
-          case 'ebay': variance = 0.7 + Math.random() * 0.5; break;
-          default: variance = 0.85 + Math.random() * 0.3;
-        }
-        retailerPrices[retailer] = +(msrp * variance).toFixed(2);
-      });
-      
-      const lowestPrice = Math.min(...Object.values(retailerPrices));
+      // Simulate TCGPlayer price variance
+      const variance = 0.7 + Math.random() * 0.5;
+      const tcgplayerPrice = +(msrp * variance).toFixed(2);
 
       packs.push({
         id: `${set.id}-${type}`,
@@ -1065,8 +1277,7 @@ function generateMockPacks(sets) {
         setName: set.name,
         series: set.series,
         productType: type,
-        currentPrice: lowestPrice,
-        retailerPrices,
+        currentPrice: tcgplayerPrice,
         releaseDate: set.releaseDate,
         isHolographic: Math.random() > 0.7,
         imageUrl: set.images?.logo,
@@ -1087,10 +1298,16 @@ export default function App() {
   const [packs, setPacks] = useState([]);
   const [filteredPacks, setFilteredPacks] = useState([]);
   const [watchlist, setWatchlist] = useLocalStorage('pokemon-watchlist', []);
-  const [priceAlerts, setPriceAlerts] = useLocalStorage('pokemon-alerts', []);
-  const [activeView, setActiveView] = useState('browse'); // browse, sets, watchlist
+  const [priceAlerts, setPriceAlerts] = useLocalStorage('pokemon-price-alerts', []);
+  const [discordWebhook, setDiscordWebhook] = useLocalStorage('pokemon-discord-webhook', '');
+  const [activeView, setActiveView] = useState('browse'); // browse, sets, watchlist, alerts
   const [selectedSet, setSelectedSet] = useState(null);
   const { notifications, addNotification, removeNotification } = useNotifications();
+  
+  // Modal states
+  const [showDiscordSettings, setShowDiscordSettings] = useState(false);
+  const [alertModalPack, setAlertModalPack] = useState(null);
+  const [editingAlert, setEditingAlert] = useState(null);
   
   const [filters, setFilters] = useState({
     set: '',
@@ -1127,6 +1344,85 @@ export default function App() {
         });
     }
   }, [sets]);
+
+  // Check price alerts whenever packs update
+  useEffect(() => {
+    if (packs.length === 0 || priceAlerts.length === 0 || !discordWebhook) return;
+    
+    const checkAlerts = async () => {
+      for (const alert of priceAlerts) {
+        if (alert.triggered && alert.notifyOnce) continue;
+        
+        const pack = packs.find(p => p.id === alert.packId);
+        if (!pack) continue;
+        
+        if (pack.currentPrice <= alert.targetPrice) {
+          // Price dropped below target!
+          const result = await DiscordService.sendAlert(discordWebhook, pack, alert.targetPrice);
+          
+          if (result.success) {
+            addNotification(`Alert sent for ${pack.name}!`, 'success');
+            
+            // Mark alert as triggered
+            if (alert.notifyOnce) {
+              setPriceAlerts(prev => prev.map(a => 
+                a.packId === alert.packId ? { ...a, triggered: true } : a
+              ));
+            }
+          }
+        }
+      }
+    };
+    
+    checkAlerts();
+  }, [packs, priceAlerts, discordWebhook]);
+
+  // Handle opening alert modal
+  const handleSetAlert = useCallback((pack) => {
+    const existingAlert = priceAlerts.find(a => a.packId === pack.id);
+    setEditingAlert(existingAlert || null);
+    setAlertModalPack(pack);
+  }, [priceAlerts]);
+
+  // Handle saving alert
+  const handleSaveAlert = useCallback((alert) => {
+    setPriceAlerts(prev => {
+      const existing = prev.findIndex(a => a.packId === alert.packId);
+      if (existing >= 0) {
+        const updated = [...prev];
+        updated[existing] = alert;
+        return updated;
+      }
+      return [...prev, alert];
+    });
+    addNotification(`Price alert set for ${alert.packName}!`, 'success');
+  }, [addNotification]);
+
+  // Handle removing alert
+  const handleRemoveAlert = useCallback((packId) => {
+    setPriceAlerts(prev => prev.filter(a => a.packId !== packId));
+    addNotification('Alert removed', 'info');
+  }, [addNotification]);
+
+  // Handle editing alert
+  const handleEditAlert = useCallback((alert) => {
+    const pack = packs.find(p => p.id === alert.packId);
+    if (pack) {
+      setEditingAlert(alert);
+      setAlertModalPack(pack);
+    }
+  }, [packs]);
+
+  // Test Discord webhook
+  const handleTestWebhook = useCallback(async (url) => {
+    const result = await DiscordService.testWebhook(url);
+    if (result.success) {
+      addNotification('Discord test message sent!', 'success');
+    } else {
+      addNotification(`Discord test failed: ${result.error}`, 'warning');
+    }
+    return result;
+  }, [addNotification]);
 
   // Apply filters and sorting
   useEffect(() => {
@@ -1194,23 +1490,6 @@ export default function App() {
     setFilteredPacks(result);
   }, [packs, filters, sortBy, sortOrder, searchQuery]);
 
-  // Check price alerts
-  useEffect(() => {
-    if (priceAlerts.length > 0) {
-      packs.forEach(pack => {
-        const msrp = MSRP_DATA[pack.productType]?.msrp || MSRP_DATA['booster-pack'].msrp;
-        priceAlerts.forEach(alert => {
-          const diff = ((pack.currentPrice - msrp) / msrp) * 100;
-          if (alert.type === 'below-msrp' && diff <= -alert.threshold) {
-            addNotification(`DEAL: ${pack.name} is ${Math.abs(diff).toFixed(1)}% below MSRP!`, 'success');
-          } else if (alert.type === 'above-msrp' && diff >= alert.threshold) {
-            addNotification(`ALERT: ${pack.name} is ${diff.toFixed(1)}% above MSRP`, 'warning');
-          }
-        });
-      });
-    }
-  }, [packs, priceAlerts, addNotification]);
-
   const handleAddToWatchlist = useCallback((pack) => {
     setWatchlist(prev => {
       const exists = prev.some(p => p.id === pack.id);
@@ -1237,17 +1516,29 @@ export default function App() {
     addNotification('Data exported to CSV', 'success');
   }, [activeView, watchlist, filteredPacks, addNotification]);
 
-  const handleSetAlert = useCallback((alert) => {
-    setPriceAlerts(prev => [...prev, { ...alert, id: Date.now() }]);
-    addNotification(`Alert set: Notify when ${alert.threshold}% ${alert.type.replace('-', ' ')}`, 'success');
-  }, [setPriceAlerts, addNotification]);
-
   if (setsLoading) return <LoadingSpinner />;
   if (setsError) return <div className="error-state">Error loading data: {String(setsError)}. Please try again.</div>;
 
   return (
     <div className="app">
       <NotificationToast notifications={notifications} onRemove={removeNotification} />
+      
+      {/* Modals */}
+      <DiscordSettings 
+        webhookUrl={discordWebhook}
+        onWebhookChange={setDiscordWebhook}
+        onTest={handleTestWebhook}
+        isOpen={showDiscordSettings}
+        onClose={() => setShowDiscordSettings(false)}
+      />
+      
+      <PriceAlertModal 
+        pack={alertModalPack}
+        isOpen={!!alertModalPack}
+        onClose={() => { setAlertModalPack(null); setEditingAlert(null); }}
+        onSave={handleSaveAlert}
+        existingAlert={editingAlert}
+      />
       
       <header className="app-header">
         <div className="header-content">
@@ -1278,6 +1569,19 @@ export default function App() {
               onClick={() => setActiveView('watchlist')}
             >
               Watchlist ({watchlist.length})
+            </button>
+            <button 
+              className={`nav-btn ${activeView === 'alerts' ? 'active' : ''}`}
+              onClick={() => setActiveView('alerts')}
+            >
+              Alerts ({priceAlerts.filter(a => !a.triggered).length})
+            </button>
+            <button 
+              className="nav-btn settings-btn"
+              onClick={() => setShowDiscordSettings(true)}
+              title="Discord Settings"
+            >
+              Settings
             </button>
           </nav>
         </div>
@@ -1330,12 +1634,37 @@ export default function App() {
                       pack={pack}
                       onAddToWatchlist={handleAddToWatchlist}
                       isWatched={watchlist.some(w => w.id === pack.id)}
+                      onSetAlert={handleSetAlert}
+                      hasAlert={priceAlerts.some(a => a.packId === pack.id && !a.triggered)}
                     />
                   ))
                 )}
               </section>
             </div>
           </>
+        )}
+
+        {activeView === 'alerts' && (
+          <section className="alerts-view">
+            <div className="alerts-header">
+              <h2>Price Alerts</h2>
+              <p>Get notified on Discord when prices drop below your targets.</p>
+              {!discordWebhook && (
+                <button 
+                  className="btn btn-primary"
+                  onClick={() => setShowDiscordSettings(true)}
+                >
+                  Configure Discord Webhook
+                </button>
+              )}
+            </div>
+            <AlertsManager 
+              alerts={priceAlerts}
+              onRemove={handleRemoveAlert}
+              onEdit={handleEditAlert}
+              webhookConfigured={!!discordWebhook}
+            />
+          </section>
         )}
 
         {activeView === 'sets' && (
