@@ -171,8 +171,13 @@ img {
 }
 
 .logo-icon {
-  font-size: 2rem;
-  filter: drop-shadow(0 0 8px rgba(255, 203, 5, 0.5));
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-secondary);
+  background: var(--gradient-gold);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .logo h1 {
@@ -297,8 +302,10 @@ img {
   left: var(--space-md);
   top: 50%;
   transform: translateY(-50%);
-  font-size: 1rem;
-  opacity: 0.6;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
 }
 
 .search-input {
@@ -900,7 +907,10 @@ img {
 }
 
 .retailer-icon {
-  font-size: 1rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 32px;
+  text-align: center;
 }
 
 .retailer-name {
@@ -940,8 +950,10 @@ img {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-size: 1.1rem;
+  font-size: 0.65rem;
+  font-weight: 600;
   text-decoration: none;
+  color: var(--color-text-muted);
   transition: all var(--transition-fast);
   cursor: pointer;
 }

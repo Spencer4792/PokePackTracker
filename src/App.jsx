@@ -30,49 +30,49 @@ const MSRP_DATA = {
 const RETAILERS = {
   tcgplayer: {
     name: 'TCGPlayer',
-    icon: '🛒',
+    icon: 'TCG',
     color: '#00A0E9',
     getSearchUrl: (packName, setName) => 
       `https://www.tcgplayer.com/search/pokemon/product?q=${encodeURIComponent(packName)}&view=grid&ProductTypeName=Sealed+Products`,
   },
   ebay: {
     name: 'eBay',
-    icon: '🏷️',
+    icon: 'eBay',
     color: '#E53238',
     getSearchUrl: (packName, setName) => 
       `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(`pokemon ${packName} sealed`)}&_sacat=183454`,
   },
   amazon: {
     name: 'Amazon',
-    icon: '📦',
+    icon: 'AMZ',
     color: '#FF9900',
     getSearchUrl: (packName, setName) => 
       `https://www.amazon.com/s?k=${encodeURIComponent(`pokemon ${packName}`)}&i=toys-and-games`,
   },
   pokemoncenter: {
     name: 'Pokémon Center',
-    icon: '⭐',
+    icon: 'PC',
     color: '#FFCB05',
     getSearchUrl: (packName, setName) => 
       `https://www.pokemoncenter.com/search/${encodeURIComponent(setName)}`,
   },
   walmart: {
     name: 'Walmart',
-    icon: '🏪',
+    icon: 'WMT',
     color: '#0071CE',
     getSearchUrl: (packName, setName) => 
       `https://www.walmart.com/search?q=${encodeURIComponent(`pokemon ${packName}`)}`,
   },
   target: {
     name: 'Target',
-    icon: '🎯',
+    icon: 'TGT',
     color: '#CC0000',
     getSearchUrl: (packName, setName) => 
       `https://www.target.com/s?searchTerm=${encodeURIComponent(`pokemon ${setName}`)}`,
   },
   gamestop: {
     name: 'GameStop',
-    icon: '🎮',
+    icon: 'GS',
     color: '#ED1C24',
     getSearchUrl: (packName, setName) => 
       `https://www.gamestop.com/search/?q=${encodeURIComponent(`pokemon ${packName}`)}&lang=en_US`,
@@ -499,7 +499,7 @@ function SearchBar({ onSearch, placeholder = "Search packs..." }) {
 
   return (
     <div className="search-bar">
-      <div className="search-icon">🔍</div>
+      <div className="search-icon">Search</div>
       <input
         type="text"
         value={query}
@@ -616,7 +616,7 @@ function SortControls({ sortBy, sortOrder, onSortChange }) {
         className="sort-direction"
         title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
       >
-        {sortOrder === 'asc' ? '↑' : '↓'}
+        {sortOrder === 'asc' ? 'ASC' : 'DESC'}
       </button>
     </div>
   );
@@ -628,11 +628,11 @@ function PriceBadge({ currentPrice, msrp }) {
   const diff = msrp ? ((currentPrice - msrp) / msrp * 100).toFixed(1) : 0;
 
   const statusLabels = {
-    'great-deal': '🔥 Great Deal',
-    'below-msrp': '✓ Below MSRP',
-    'at-msrp': '≈ At MSRP',
-    'above-msrp': '↑ Above MSRP',
-    'overpriced': '⚠️ Overpriced',
+    'great-deal': 'GREAT DEAL',
+    'below-msrp': 'Below MSRP',
+    'at-msrp': 'At MSRP',
+    'above-msrp': 'Above MSRP',
+    'overpriced': 'OVERPRICED',
     'unknown': '? Unknown',
   };
 
@@ -674,7 +674,7 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
             e.target.src = 'https://via.placeholder.com/200x280?text=No+Image';
           }}
         />
-        {pack.isHolographic && <span className="holo-badge">✨ Holo</span>}
+        {pack.isHolographic && <span className="holo-badge">HOLO</span>}
         {lowestRetailer && (
           <span className="lowest-price-badge" style={{ backgroundColor: lowestRetailer.color }}>
             {lowestRetailer.icon} Best: {Utils.formatPrice(lowestRetailer.price)}
@@ -707,7 +707,7 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
               className="retailer-toggle"
               onClick={() => setShowRetailers(!showRetailers)}
             >
-              {showRetailers ? '▼ Hide Prices' : '▶ Compare Prices'} ({Object.keys(pack.retailerPrices).length} stores)
+              {showRetailers ? '- Hide Prices' : '+ Compare Prices'} ({Object.keys(pack.retailerPrices).length} stores)
             </button>
             
             {showRetailers && (
@@ -748,7 +748,7 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
             className={`quick-link ${pack.isRealData ? 'direct-link' : ''}`}
             title={pack.isRealData ? "Buy on TCGPlayer (Direct Link)" : "Search on TCGPlayer"}
           >
-            🛒
+            TCG
           </a>
           <a 
             href={RETAILERS.ebay.getSearchUrl(pack.name, pack.setName)}
@@ -757,7 +757,7 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
             className="quick-link"
             title="Search on eBay"
           >
-            🏷️
+            eBay
           </a>
           <a 
             href={RETAILERS.amazon.getSearchUrl(pack.name, pack.setName)}
@@ -766,21 +766,21 @@ function PackCard({ pack, onAddToWatchlist, isWatched }) {
             className="quick-link"
             title="Search on Amazon"
           >
-            📦
+            AMZ
           </a>
           <button 
             onClick={() => onAddToWatchlist(pack)}
             className={`quick-link watchlist-btn ${isWatched ? 'watched' : ''}`}
             title={isWatched ? 'Remove from Watchlist' : 'Add to Watchlist'}
           >
-            {isWatched ? '★' : '☆'}
+            {isWatched ? 'Saved' : 'Save'}
           </button>
         </div>
         
         {/* Real data indicator */}
         {pack.isRealData && (
           <div className="real-data-indicator">
-            <span>🟢 Live Price</span>
+            <span>LIVE PRICE</span>
             {pack.lastUpdated && (
               <span className="updated-time">Updated: {new Date(pack.lastUpdated).toLocaleTimeString()}</span>
             )}
@@ -1116,7 +1116,7 @@ export default function App() {
           const hasRealData = realPacks.some(p => p.isRealData);
           setDataSource(hasRealData ? 'live' : 'demo');
           if (hasRealData) {
-            addNotification('✅ Loaded live TCGPlayer pricing data!', 'success');
+            addNotification('Loaded live TCGPlayer pricing data!', 'success');
           }
         })
         .catch(error => {
@@ -1202,9 +1202,9 @@ export default function App() {
         priceAlerts.forEach(alert => {
           const diff = ((pack.currentPrice - msrp) / msrp) * 100;
           if (alert.type === 'below-msrp' && diff <= -alert.threshold) {
-            addNotification(`🔥 ${pack.name} is ${Math.abs(diff).toFixed(1)}% below MSRP!`, 'success');
+            addNotification(`DEAL: ${pack.name} is ${Math.abs(diff).toFixed(1)}% below MSRP!`, 'success');
           } else if (alert.type === 'above-msrp' && diff >= alert.threshold) {
-            addNotification(`⚠️ ${pack.name} is ${diff.toFixed(1)}% above MSRP`, 'warning');
+            addNotification(`ALERT: ${pack.name} is ${diff.toFixed(1)}% above MSRP`, 'warning');
           }
         });
       });
@@ -1252,12 +1252,12 @@ export default function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="logo">
-            <span className="logo-icon">🎴</span>
-            <h1>PokéPack Tracker</h1>
+            <span className="logo-icon">PP</span>
+            <h1>PokePack Tracker</h1>
             <span className={`data-source-badge ${dataSource}`}>
-              {dataSource === 'loading' && '⏳ Loading...'}
-              {dataSource === 'live' && '🟢 Live TCGPlayer Data'}
-              {dataSource === 'demo' && '🟡 Demo Data'}
+              {dataSource === 'loading' && 'Loading...'}
+              {dataSource === 'live' && 'LIVE DATA'}
+              {dataSource === 'demo' && 'DEMO DATA'}
             </span>
           </div>
           <nav className="main-nav">
@@ -1298,7 +1298,7 @@ export default function App() {
                   onSortChange={(by, order) => { setSortBy(by); setSortOrder(order); }}
                 />
                 <button onClick={handleExport} className="btn-export-main">
-                  📥 Export
+                  Export
                 </button>
               </div>
             </div>
